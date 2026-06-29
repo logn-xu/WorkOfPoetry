@@ -1,5 +1,7 @@
 # workofpoetry
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 `workofpoetry` is a Windows-only SSH wrapper that starts `ssh.exe` inside a Windows ConPTY session, forwards terminal input/output normally, and writes local JSONL audit events for user input.
 
 > Use only in environments where you are authorized to record terminal input. SSH sessions can contain credentials, tokens, private data, and production commands.
