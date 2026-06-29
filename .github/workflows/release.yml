@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送 v1.0.0 等标签时触发
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 关键：允许创建 Release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.26.3'
+
+      - name: Build and Package with Makefile
+        run: make release-all
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            bin/release/*.exe
+          generate_release_notes: true # 自动根据提交记录生成变更日志
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
