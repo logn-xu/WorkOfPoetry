@@ -137,7 +137,18 @@ func bridgeInput(pty *conpty.ConPty, cfg Config, redactor *redact.Redactor, done
 			return
 		}
 		redacted := redactor.RedactInput(acc)
-		_ = cfg.Log.Write(logging.EventInput, input.EventData(acc, redacted, input.Options{RawInputLog: cfg.RawInputLog}))
+		data := input.EventData(acc, redacted, input.Options{RawInputLog: cfg.RawInputLog})
+
+		// When the user recalls a command from shell history (ArrowUp /
+		// ArrowDown + Enter), the command text comes from PTY output, not
+		// from keyboard input.  Fall back to the current visible line.
+		if text, _ := data["text"].(string); text == "" && hasHistoryNav(acc) {
+			if line := redactor.CurrentLine(); line != "" {
+				data["text"] = line
+			}
+		}
+
+		_ = cfg.Log.Write(logging.EventInput, data)
 		acc = nil
 	}
 
@@ -196,6 +207,15 @@ func bridgeInput(pty *conpty.ConPty, cfg Config, redactor *redact.Redactor, done
 func hasEnter(chunk []byte) bool {
 	for _, k := range input.Keys(chunk) {
 		if k == "Enter" {
+			return true
+		}
+	}
+	return false
+}
+
+func hasHistoryNav(chunk []byte) bool {
+	for _, k := range input.Keys(chunk) {
+		if k == "ArrowUp" || k == "ArrowDown" {
 			return true
 		}
 	}
