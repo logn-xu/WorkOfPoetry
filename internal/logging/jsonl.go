@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,7 +30,6 @@ type Event struct {
 type Writer struct {
 	mu        sync.Mutex
 	file      *os.File
-	encoder   *json.Encoder
 	sessionID string
 	seq       uint64
 }
@@ -50,7 +49,6 @@ func New(path string, sessionID string) (*Writer, error) {
 
 	return &Writer{
 		file:      file,
-		encoder:   json.NewEncoder(file),
 		sessionID: sessionID,
 	}, nil
 }
@@ -72,8 +70,13 @@ func (w *Writer) Write(eventType string, data map[string]any) error {
 		Seq:       w.seq,
 		Data:      data,
 	}
-	if err := w.encoder.Encode(event); err != nil {
+	// json.Marshal does not append a trailing newline, which is exactly
+	// what we want for JSONL: each event is one line terminated by '\n'.
+	if err := json.MarshalWrite(w.file, event); err != nil {
 		return fmt.Errorf("write log event: %w", err)
+	}
+	if _, err := w.file.Write([]byte{'\n'}); err != nil {
+		return fmt.Errorf("write log newline: %w", err)
 	}
 	return nil
 }

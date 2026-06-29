@@ -3,6 +3,8 @@ PKG := ./cmd/workofpoetry
 DIST_DIR := dist
 RELEASE_DIR := bin/release
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+# encoding/json/v2 ships behind the goexperiment.jsonv2 build tag in Go 1.26.
+GOEXPERIMENT ?= jsonv2
 
 .PHONY: help fmt vet test build build-windows release-all clean tidy run
 
@@ -29,15 +31,16 @@ test:
 
 build: fmt
 	mkdir -p $(DIST_DIR)
-	go build -o $(DIST_DIR)/$(APP) $(PKG)
+	GOEXPERIMENT=$(GOEXPERIMENT) go build -o $(DIST_DIR)/$(APP) $(PKG)
 
 build-windows: fmt
 	mkdir -p $(DIST_DIR)
-	GOOS=windows GOARCH=amd64 go build -o $(DIST_DIR)/$(APP).exe $(PKG)
+	GOOS=windows GOARCH=amd64 GOEXPERIMENT=$(GOEXPERIMENT) go build -o $(DIST_DIR)/$(APP).exe $(PKG)
 
 release-all: fmt vet test
 	@mkdir -p $(RELEASE_DIR)
-	GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" \
+	GOOS=windows GOARCH=amd64 GOEXPERIMENT=$(GOEXPERIMENT) \
+		go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" \
 		-o $(RELEASE_DIR)/$(APP)-$(VERSION)-windows-amd64.exe $(PKG)
 	@echo "Release binary: $(RELEASE_DIR)/$(APP)-$(VERSION)-windows-amd64.exe"
 

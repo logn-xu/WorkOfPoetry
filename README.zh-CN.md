@@ -24,6 +24,8 @@ go build -o workofpoetry.exe ./cmd/workofpoetry
 GOOS=windows GOARCH=amd64 go build ./cmd/workofpoetry
 ```
 
+> 审计日志写入器使用了 Go 1.26 的 `encoding/json/v2`,该包由 `goexperiment.jsonv2` build tag 控制。仓库中的 `Makefile` 已经为 `build` / `build-windows` / `release-all` 自动设置 `GOEXPERIMENT=jsonv2`。如果直接调用 `go build`,请在命令前加上 `GOEXPERIMENT=jsonv2`,否则会因为 "package encoding/json/v2 is not in GOROOT" 而失败。
+
 ## 使用方法
 
 ```powershell
@@ -35,7 +37,7 @@ GOOS=windows GOARCH=amd64 go build ./cmd/workofpoetry
 常用参数:
 
 - `--ssh-path ssh.exe` — SSH 可执行文件路径。
-- `--log .\logs\session.jsonl` — JSONL 审计日志路径。
+- `--log .\logs\session.jsonl` — JSONL 审计日志路径。省略时,程序会将日志写入 `./logs/ssh-session-<时间戳>.jsonl`。如果当前工作目录不可写(例如可执行文件位于 `C:\Program Files\...` 之类的只读位置并从中启动),日志目录会自动回退到当前用户的缓存目录(Windows 上为 `%LOCALAPPDATA%\workofpoetry\logs`,其它系统上为 `~/.cache/workofpoetry/logs`),保证程序仍能正常启动。
 - `--redact=true` — 在出现类似密码/口令的提示之后对输入进行脱敏。
 - `--raw-input-log=false` — 是否以 Base64 形式记录原始输入块。默认关闭。
 - `--session-id ...` — 自定义会话标识符。

@@ -24,6 +24,8 @@ Cross-compile syntax checks from Linux are possible, but ConPTY execution must b
 GOOS=windows GOARCH=amd64 go build ./cmd/workofpoetry
 ```
 
+> The audit log writer uses Go 1.26's `encoding/json/v2`, which is gated behind the `goexperiment.jsonv2` build tag. The provided `Makefile` sets `GOEXPERIMENT=jsonv2` for you. If you call `go build` directly, prepend `GOEXPERIMENT=jsonv2` to the command, otherwise the build will fail with a "package encoding/json/v2 is not in GOROOT" error.
+
 ## Usage
 
 ```powershell
@@ -35,7 +37,7 @@ Flags before `--` configure `workofpoetry`; arguments after `--` are passed dire
 Common flags:
 
 - `--ssh-path ssh.exe` — SSH executable path.
-- `--log .\logs\session.jsonl` — JSONL audit log path.
+- `--log .\logs\session.jsonl` — JSONL audit log path. When omitted, the program writes to `./logs/ssh-session-<timestamp>.jsonl`. If the current working directory is not writable (for example, when the binary lives in `C:\Program Files\...` and was launched from a read-only location), the log directory automatically falls back to the per-user cache directory (`%LOCALAPPDATA%\workofpoetry\logs` on Windows, `~/.cache/workofpoetry/logs` elsewhere), so the program still starts.
 - `--redact=true` — redact input after password/passphrase-like prompts.
 - `--raw-input-log=false` — include raw input chunks as Base64. Disabled by default.
 - `--session-id ...` — custom session identifier.
